@@ -19,33 +19,49 @@ ARQUIVO_SAIDA = Path("resultados_benchmark.csv")
 
 
 def construir_trie(frota):
-    inicio = time.perf_counter()
+    tempos = []
+    trie = None
 
-    trie = CompactTrie()
+    for _ in range(30):
+        inicio = time.perf_counter()
 
-    for entregador in frota:
-        trie.insert(entregador["geohash"], entregador)
+        nova_trie = CompactTrie()
 
-    tempo_ms = (time.perf_counter() - inicio) * 1000
+        for entregador in frota:
+            nova_trie.insert(
+                entregador["geohash"],
+                entregador
+            )
 
-    return trie, tempo_ms
+        tempo_ms = (time.perf_counter() - inicio) * 1000
+        tempos.append(tempo_ms)
+        trie = nova_trie
+
+    return trie, statistics.median(tempos)
+
 
 
 def busca_exaustiva(frota, lat, lon, raio_km):
-    encontrados = []
+    elegiveis = []
 
     for entregador in frota:
         distancia = haversine_km(
-            lat,
-            lon,
+            lat, lon,
             entregador["lat"],
-            entregador["lon"],
+            entregador["lon"]
         )
 
         if distancia <= raio_km:
-            encontrados.append(entregador["id"])
+            elegiveis.append({
+                **entregador,
+                "distancia_km": distancia,
+                "eta_min": distancia / 20 * 60
+            })
 
-    return set(encontrados)
+    elegiveis.sort(key=lambda e: e["distancia_km"])
+
+    return {e["id"] for e in elegiveis}
+
 
 
 def medir_consulta(frota, trie, restaurante, raio_km):
