@@ -31,7 +31,7 @@ source .venv/bin/activate
 3. Instale as dependências de `requirements.txt`
 ```
 pip install -r requirements.txt
-python.exe -m pip install --upgrade pip
+python.exe -m pip install --upgrade pip  #caso alguma atualização seja necessária
 ```
 4. Executar a aplicação Streamlit
 ```
