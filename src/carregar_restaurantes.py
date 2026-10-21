@@ -4,24 +4,20 @@ from pathlib import Path
 import pandas as pd
 
 
-CAMINHO_CSV = (
-    Path(__file__).resolve().parent.parent
-    / "data"
-    / "bares.csv"
-)
+PASTA_DADOS = Path(__file__).resolve().parent.parent / "data"
+CAMINHO_CSV = PASTA_DADOS / "bares.csv"
+CAMINHO_GEO = PASTA_DADOS / "bares_geocodificados.csv"
 
 
 def carregar_restaurantes():
-    """Carrega e organiza os estabelecimentos do CSV."""
+    """Carrega e organiza os restaurantes do CSV."""
 
     df = pd.read_csv(CAMINHO_CSV)
 
-    # Remove registros sem endereço ou bairro.
     df = df.dropna(
         subset=["NOME_LOGRADOURO", "NOME_BAIRRO"]
     ).copy()
 
-    # Normaliza os campos textuais.
     for coluna in [
         "NOME_LOGRADOURO",
         "NOME_BAIRRO",
@@ -30,13 +26,20 @@ def carregar_restaurantes():
     ]:
         df[coluna] = df[coluna].fillna("").astype(str).str.strip()
 
-    # Usa o nome fantasia; se não existir, usa a razão social.
+    df["eh_restaurante"] = (
+        df["DESCRICAO_CNAE_PRINCIPAL"]
+        .str.contains("RESTAURANTES", case=False, na=False)
+    )
+
+    df = df[df["eh_restaurante"]].copy()
+
     df["nome_exibicao"] = df["NOME_FANTASIA"].where(
         df["NOME_FANTASIA"] != "",
         df["NOME"],
     )
 
-    # Monta um endereço textual para futura geocodificação.
+    df = df[df["nome_exibicao"] != ""]
+
     df["endereco"] = (
         df["DESC_LOGRADOURO"].fillna("").astype(str).str.strip()
         + " "
@@ -48,40 +51,43 @@ def carregar_restaurantes():
         + ", Belo Horizonte, MG, Brasil"
     )
 
-    # Prioriza estabelecimentos identificados como restaurantes.
-    df["eh_restaurante"] = (
-        df["DESCRICAO_CNAE_PRINCIPAL"]
-        .str.contains("RESTAURANTES", case=False, na=False)
-    )
-
     return df
 
-def carregar_restaurantes_geocodificados():
-    """Retorna os estabelecimentos com coordenadas válidas."""
 
-    raiz = Path(__file__).resolve().parent.parent
-    caminho_geo = raiz / "data" / "bares_geocodificados.csv"
+def carregar_restaurantes_geocodificados():
+    """Retorna restaurantes com coordenadas válidas."""
 
     restaurantes = carregar_restaurantes()
-    coordenadas = pd.read_csv(caminho_geo)
+    coordenadas = pd.read_csv(CAMINHO_GEO)
+
+    coordenadas["lat"] = pd.to_numeric(
+        coordenadas["lat"], errors="coerce"
+    )
+    coordenadas["lon"] = pd.to_numeric(
+        coordenadas["lon"], errors="coerce"
+    )
 
     coordenadas = coordenadas.dropna(subset=["lat", "lon"])
+    coordenadas = coordenadas[
+        coordenadas["lat"].between(-90, 90)
+        & coordenadas["lon"].between(-180, 180)
+    ]
     coordenadas = coordenadas.drop_duplicates(subset=["_id"])
 
     dados = restaurantes.merge(
         coordenadas[["_id", "lat", "lon"]],
         on="_id",
-        how="inner"
+        how="inner",
     )
 
-    resultado = []
+    dados = dados.drop_duplicates(subset=["_id"])
 
-    for _, row in dados.iterrows():
-        resultado.append({
+    return [
+        {
             "id": int(row["_id"]),
             "name": row["nome_exibicao"],
             "lat": float(row["lat"]),
-            "lon": float(row["lon"])
-        })
-
-    return resultado
+            "lon": float(row["lon"]),
+        }
+        for _, row in dados.iterrows()
+    ]
