@@ -2,11 +2,18 @@
 
 Nesse trabalho foram abordados os aspectos práticos da integração entre estruturas de dados para tratamento de strings e algoritmos de geometria computacional, através da implementação de árvores de prefixos aplicadas à codificação Geohash.
 
-## Tecnologias Utilizadas
+## Integrantes
+- Aynoa Souza Jorgino
+- Melissa Costa Corrêa de Lima
+
+## Tecnologias & Bibliotecas Utilizadas
 - Python
 - Pandas
 - Folium
 - Streamlit
+- Numpy
+- Matplotlib
+- Osmnx
 
 ## Como Rodar
 Execute no terminal as etapas a seguir na pasta raíz do projeto:
