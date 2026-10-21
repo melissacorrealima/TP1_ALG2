@@ -43,6 +43,7 @@ python.exe -m pip install --upgrade pip  // caso alguma atualização seja neces
 4. Executar a aplicação Streamlit
 ```
 python -m streamlit run app.py
+// ou streamlit run app.py
 ```
 - O terminal exibirá o endereço de acesso: `http://localhost:8501`
 - O navegador abrirá automaticamente a página com a aplicação do trabalho.
