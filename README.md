@@ -47,3 +47,4 @@ python -m streamlit run app.py
 - O terminal exibirá o endereço de acesso: `http://localhost:8501`
 - O navegador abrirá automaticamente a página com a aplicação do trabalho.
 - Para interromper a aplicação pressione `Ctrl + C` no terminal onde o Streamlit está rodando para encerrar o servidor local.
+- Para sair da `.venv`, digite `deactivate` no terminal.
